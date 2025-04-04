@@ -1,0 +1,57 @@
+module ControlUnit(
+    input [3:0] opcode,     // 4-bit opcode
+    output reg reg_write,   // Register write enable
+    output reg [1:0] alu_op,// ALU control signals
+    output reg branch,      // Branch signal
+    output reg jump,        // Jump signal
+    output reg mem_read,    // Memory read enable
+    output reg mem_write,   // Memory write enable
+    output reg alu_src,     // ALU source select (Register vs Immediate/Memory)
+    output reg mem_to_reg   // Control signal to select ALU result or memory data
+);
+
+    always @(*) begin
+        // Default values to prevent unintended behavior
+        reg_write = 0;
+        alu_op = 2'b00;
+        branch = 0;
+        jump = 0;
+        mem_read = 0;
+        mem_write = 0;
+        alu_src = 0;
+        mem_to_reg = 0;
+       
+        case (opcode)
+            4'b0000: begin reg_write = 1; alu_op = 2'b00; end  // ADD
+            4'b0001: begin reg_write = 1; alu_op = 2'b01; end  // SUB
+            4'b0010: begin reg_write = 1; alu_op = 2'b10; end  // AND
+            4'b0011: begin reg_write = 1; alu_op = 2'b11; end  // OR
+           
+            4'b0100: begin branch = 1; alu_op = 2'b01; end      // BEQ (Branch if Equal)
+            4'b0101: begin jump = 1; end                       // JUMP
+
+            4'b1010: begin // LW (Load Word)
+                reg_write = 1;
+                mem_read = 1;
+                alu_src = 1;  // Use immediate as address
+                mem_to_reg = 1; // Load from memory into register
+            end
+
+            4'b1011: begin // SW (Store Word)
+                mem_write = 1;
+                alu_src = 1;  // Use immediate as address
+            end
+
+            default: begin // NOP (No Operation)
+                reg_write = 0;
+                alu_op = 2'b00;
+                branch = 0;
+                jump = 0;
+                mem_read = 0;
+                mem_write = 0;
+                alu_src = 0;
+                mem_to_reg = 0;
+            end
+        endcase
+    end
+endmodule
